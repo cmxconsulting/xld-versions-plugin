@@ -34,4 +34,21 @@
                   description="The default application to show in the versions overview"/>
     </type>
 
+    <type type="versions.SearchFilters"
+          extends="udm.Configuration"
+          description="Defines the default search filters criterias for the Versions plugin">
+        <property name="minimumCharactersToSearch"
+                  kind="integer"
+                  required="false"
+                  default="0"
+                  label="Minimum characters to type to search"
+                  description="The minimum characters number to type in order to trigger the search (0 can cause slowness if you have many applications)"/>
+        <property name="maxResults"
+                  kind="integer"
+                  required="false"
+                  default="100"
+                  label="Maximum results per search"
+                  description="The maximum number of results returned by a search query (100 by default, -1 for all results). Beware, -1 can cause performance issues."/>
+
+    </type>
 </synthetic>

@@ -19,6 +19,6 @@
     <endpoint path="/xld-versions-plugin/default-app"     method="GET" script="xld-versions-plugin/default-app.py" />
     <endpoint path="/xld-versions-plugin/env-details"     method="GET" script="xld-versions-plugin/env-details.py" />
     <endpoint path="/xld-versions-plugin/env-order"       method="GET" script="xld-versions-plugin/env-order.py" />
+    <endpoint path="/xld-versions-plugin/plugin-settings" method="GET" script="xld-versions-plugin/plugin-settings.py" />
     <endpoint path="/xld-versions-plugin/version-details" method="GET" script="xld-versions-plugin/version-details.py" />
 </endpoints>
-

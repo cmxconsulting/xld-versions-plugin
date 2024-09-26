@@ -1,6 +1,20 @@
 .gradle
 .idea
 build
+.DS_Store
 
 supervisord.*
 *.iml
+
+
+.settings
+.vscode
+.idea
+
+.classpath
+.project
+
+target
+
+*.iml
+src/test

@@ -1,108 +1,118 @@
-<!--
-
-    Copyright 2019 XEBIALABS
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
--->
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    
-    <script type="text/javascript" src="angular-1.2.26/angular.min.js"></script>
-    <script type="text/javascript" src="ui-bootstrap-0.11.2/ui-bootstrap-tpls-0.11.2.min.js"></script>
-    <script type="text/javascript" src="versions.js"></script>
-
-    <link rel="stylesheet" href="bootstrap-3.2.0/css/bootstrap.min.css">
-    <link rel="stylesheet" href="versions.css">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+	<link href="css/bootstrap-icons.min.css" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" href="css/versions.css" type="text/css">
+	<title>XLD - Versions</title>
+	<meta charset="UTF-8">
 </head>
-<body ng-app="staterVersions" ng-controller="VersionsController" class="ng-cloak" xmlns:ng="http://angularjs.org" id="ng-app" ng-app="staterVersions">
 
-<script type="text/ng-template" id="envDetails.html">
-    <div class="modal-header">
-        <h3 class="modal-title">{{ envDetails.env }}</h3>
-    </div>
-    <div class="modal-body">
-        <p>Containers to which {{ envDetails.version }} has been deployed:</p>
-        <ul>
-            <li ng-repeat="container in envDetails.containers | orderBy:'toString()'">{{ container }}</li>
-        </ul>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-primary" ng-click="dismiss()">Close</button>
-    </div>
-</script>
+<body>
 
-<script type="text/ng-template" id="compare.html">
-    <div class="modal-header">
-        <h3 class="modal-title">Comparing composite application {{ application }}</h3>
-    </div>
-    <div class="modal-body">
-        <p>Comparing the version {{ envVersion.id.split('/').pop() }} (currently deployed on {{ env.split('/').pop() }}) with version {{ compareVersion.id.split('/').pop() }}:</p>
-        <table class="overview">
-            <tr>
-                <td></td>
-                <td>{{ envVersion.id.split('/').pop() }}</td>
-                <td>{{ compareVersion.id.split('/').pop() }}</td>
-            </tr>
-            <tr ng-repeat="(package, version) in envVersion.packages | orderBy: 'toString()'">
-                <td>{{ package.replace('Applications/', '') }}</td>
-                <td>{{ version }}</td>
-                <td ng-class="(version != compareVersion.packages[package]) ? 'diff' : ''">{{ compareVersion.packages[package] }}</td>
-            </tr>
-        </table>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-primary" ng-click="dismiss()">Close</button>
-    </div>
-</script>
+	<div id="envDetailsModal" class="modal fade">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h3 class="modal-title">Title</h3>
+				</div>
+				<div class="modal-body">
+					<p>Containers to which <strong><span id="envVersion"></span></strong> has been deployed:
+					</p>
+					<ul id="containerList" class="containerList"></ul>
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-primary" id="closeEnvDetailsModal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
 
-<div class="content">
+	<div id="compareModal" class="modal">
+		<div class="modal-header">
+			<h3 class="modal-title">Comparing composite application <span id="applicationName"></span></h3>
+		</div>
+		<div class="modal-body">
+			<p>Comparing the version <strong><span id="envVersionId"></span></strong> (currently deployed on
+				<strong><span id="envName"></span></strong>) with version <span id="compareVersionId"></span>:
+			</p>
+			<table class="overview">
+				<thead>
+					<tr>
+						<th>&nbsp;</th>
+						<th id="envVersionIdHeader"></th>
+						<th id="compareVersionIdHeader"></th>
+					</tr>
+				</thead>
+				<tbody id="packageComparison"></tbody>
+			</table>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary" id="closeCompareModal">Close</button>
+		</div>
+	</div>
 
-    <h3 class="application">Versions overview for
-        <select ng-model="application" ng-change="refresh()">
-            <option ng-repeat="app in applications">{{ app }}</option>
-        </select>
-        <a class="glyphicon glyphicon-refresh icon-refresh-animate" ng-click="refresh()" title="Refresh"></a>
-    </h3>
+	<div class="content">
+		<h3 class="application">Versions overview</h3>
 
-    <p ng-if="message">{{ message }}</p>
-    <p ng-if="!message && countKeys(versions) == 0">No versions of {{ application }} have been deployed.</p>
-    <table ng-if="!message && countKeys(versions) > 0" class="overview">
-        <tr>
-            <td></td>
-            <td ng-repeat="env in environments">{{ env.split('/').pop() }}</td>
-        </tr>
-        <tr ng-repeat="(version,details) in versions">
-            <td class="version" ng-if="details.package.type != 'udm.CompositePackage'">
-                {{ version.split('/').pop() }}
-            </td>
-            <td class="version" ng-if="details.package.type == 'udm.CompositePackage'">
-                <a ng-click="details.isCollapsed = !details.isCollapsed">
-                <span class="glyphicon glyphicon glyphicon-expand" ng-if="details.isCollapsed"></span>
-                <span class="glyphicon glyphicon glyphicon-collapse-down" ng-if="!details.isCollapsed"></span>
-                {{ version.split('/').pop() }}
-                </a>
-                <table collapse="details.isCollapsed" class="details">
-                    <tr ng-repeat="package in details.package.packages | orderBy:'id'">
-                        <td class="details">{{package.id.replace("Applications/", "").split('/').slice(-2)[0]}}</td>
-                        <td class="details">{{package.id.replace("Applications/", "").split('/').pop()}}</td>
-                    </tr>
-                </table>
-            </td>
+		<div class="search">
+			<div class="mb-3">
+				<form id="searchForm">
+					<label for="search" class="form-label">Search for application: </label>
+					<div>
+						<input type="text" id="search" class="form-control" disabled="disabled" />
+						<input class="btn btn-primary" id="searchButton" type="submit" value="Search" disabled="disabled" />
+					</div>
+				</form>
+			</div>
+			<div class="mb-3">
+				<label for="application">Applications: </label>
+				<div>
+					<select id="application" class="form-select" disabled="disabled">
+						<option>Select an application</option>
+					</select>
+					<a id="refresh" title="Refresh"><i class="bi bi-arrow-repeat"></i></a>
+				</div>
+				<div id="maxResultsDescription">Warning : Only the <span id="maxResults">100</span> first result(s) will
+					be displayed in the dropdown list.
+					Change your search request if you don't find your results. </div>
+			</div>
+		</div>
+		<div id="loader" class=" align-items-center">
+			<div class="spinner-border text-primary">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+			<span class="ms-2" id="loaderMessage">Loading...</span>
+		</div>
+		<div class="alert alert-warning align-items-center" id="errorMessageBox" role="alert" style="display:none">
+			<h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Error !</h4>
 
-            <td ng-repeat="env in environments">
-                <a ng-if="details.envs.indexOf(env)>=0" class="glyphicon glyphicon-ok" ng-click="showEnvDetails(env)" title="Show containers for {{ env }}" /></a>
-                <a ng-if="(details.package.type == 'udm.CompositePackage') && (details.envs.indexOf(env) < 0)" class="compare" ng-click="compareVersion(env, version)" title="Compare {{ env }} with version {{ version }}" /><img src="compare.png"></a>
-            </td>
-        </tr>
-    </table>
-</div>
+			<div id="errorMessage">
+
+			</div>
+		</div>
+
+		<p id="noVersionsMessage" style="display: none;">No versions of <span id="applicationName"></span> have been
+			deployed.
+		</p>
+		<table id="versionsTable" class="overview" style="display: none;">
+			<thead>
+				<tr>
+					<th></th>
+					<!-- Environment headers will be populated dynamically -->
+				</tr>
+			</thead>
+			<tbody id="versionsBody">
+				<!-- Version rows will be populated dynamically -->
+			</tbody>
+		</table>
+	</div>
+	<script src="js/bootstrap.bundle.min.js"></script>
+	<script src="js/jquery-3.7.1.min.js"></script>
+	<script type="text/javascript" src="js/versions.js"></script>
 
 </body>
+
 </html>
